@@ -1,0 +1,1332 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#203c67">
+  <title>智能食物盒AI</title>
+  <style>
+    :root {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", sans-serif;
+      color: #172d4c;
+      background: #f3f6fb;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 8% 5%, #dceaff 0, transparent 31%),
+        radial-gradient(circle at 92% 12%, #e2f6dc 0, transparent 28%),
+        #f5f8fc;
+    }
+    .page {
+      width: min(780px, calc(100% - 28px));
+      margin: auto;
+      padding: 34px 0 max(32px, env(safe-area-inset-bottom));
+    }
+    header { text-align: center; margin-bottom: 20px; }
+    .tag {
+      display: inline-block;
+      padding: 7px 12px;
+      border-radius: 999px;
+      background: #dfeaff;
+      color: #315b99;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .1em;
+    }
+    h1 { margin: 13px 0 6px; font-size: clamp(34px, 8vw, 56px); }
+    header p { margin: 0 auto; max-width: 630px; color: #65758a; }
+    .card {
+      margin-top: 17px;
+      padding: 18px;
+      border: 1px solid #dce5f2;
+      border-radius: 23px;
+      background: rgba(255,255,255,.95);
+      box-shadow: 0 16px 48px rgba(28,53,88,.1);
+    }
+    .camera {
+      display: grid;
+      place-items: center;
+      min-height: 280px;
+      overflow: hidden;
+      border: 2px dashed #9eb5d4;
+      border-radius: 17px;
+      background: #f8faff;
+      cursor: pointer;
+      text-align: center;
+    }
+    .camera-icon { display: block; margin-bottom: 8px; font-size: 43px; }
+    .camera strong, .camera small { display: block; }
+    .camera strong { font-size: 20px; }
+    .camera small { margin-top: 8px; color: #748196; }
+    #preview { width: 100%; height: 340px; object-fit: contain; }
+    .native-file-input {
+      display: block;
+      position: static;
+      width: 100%;
+      min-height: 52px;
+      margin-top: 10px;
+      padding: 7px;
+      border: 1px solid #c8d7e9;
+      border-radius: 13px;
+      color: #315379;
+      background: #edf3ff;
+      font: inherit;
+      font-size: 16px;
+    }
+    .native-file-input::file-selector-button {
+      min-height: 38px;
+      margin-right: 10px;
+      padding: 8px 12px;
+      border: 0;
+      border-radius: 9px;
+      color: white;
+      background: #315f9e;
+      font: inherit;
+      font-weight: 800;
+    }
+    .safari-help { margin: 8px 2px 0; color: #68798d; font-size: 12px; line-height: 1.45; }
+    .built-in-list { padding: 14px; border-radius: 14px; background: #edf3ff; color: #315379; }
+    .built-in-list strong { display: block; margin-bottom: 5px; }
+    .built-in-list p { margin: 0; font-size: 13px; line-height: 1.55; }
+    .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+    .actions.single { grid-template-columns: 1fr; }
+    .actions.three { grid-template-columns: repeat(3, 1fr); }
+    button, .button {
+      padding: 15px;
+      border: 0;
+      border-radius: 14px;
+      color: white;
+      background: #315f9e;
+      font: inherit;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .button { display: flex; align-items: center; justify-content: center; text-align: center; }
+    button.secondary, .button.secondary { background: #e8eef7; color: #315379; }
+    button:disabled { opacity: .55; cursor: wait; }
+    .status { margin-top: 13px; padding: 13px; border-radius: 12px; font-size: 14px; }
+    .status.info { background: #edf3ff; color: #315379; }
+    .status.loading { background: #fff4d6; color: #755615; }
+    .status.success { background: #e8f6e7; color: #236039; }
+    .status.error { background: #ffebe8; color: #8a3029; }
+    progress { width: 100%; height: 10px; margin-top: 9px; accent-color: #3e6fab; }
+    .caption { margin: 0; color: #6d7d90; font-size: 13px; font-weight: 800; letter-spacing: .08em; }
+    h2 { margin: 6px 0 22px; font-size: 38px; }
+    .feature-head { margin-bottom: 15px; }
+    .feature-head .caption { color: #376cab; }
+    .feature-head h2 { margin: 4px 0 5px; font-size: clamp(24px, 6vw, 32px); }
+    .feature-head p { margin: 0; color: #68798d; font-size: 14px; line-height: 1.55; }
+    .category-path { margin: -13px 0 22px; color: #64758a; font-size: 14px; }
+    .prediction { margin: 16px 0; padding: 15px; border: 1px solid #dce5f2; border-radius: 15px; }
+    .prediction.confirmed { border-color: #5ca36b; background: #edf8ef; }
+    .prediction-row { display: flex; justify-content: space-between; gap: 16px; }
+    .prediction-path { margin: 7px 0 0; color: #64758a; font-size: 13px; }
+    .meter { height: 9px; margin-top: 7px; overflow: hidden; border-radius: 99px; background: #e6edf6; }
+    .meter span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #4e7dbc, #61a95e); }
+    .confirm-choice { width: 100%; margin-top: 13px; padding: 12px; background: #376cab; }
+    .confirm-choice.selected { background: #39804b; }
+    #date-preview { width: 100%; height: 260px; object-fit: contain; }
+    .date-camera { min-height: 220px; position: relative; }
+    .date-guide {
+      position: absolute;
+      inset: 50% auto auto 50%;
+      width: min(82%, 520px);
+      height: 92px;
+      transform: translate(-50%, -50%);
+      border: 3px solid rgba(255,255,255,.95);
+      border-radius: 12px;
+      box-shadow: 0 0 0 999px rgba(16,35,61,.18);
+      pointer-events: none;
+    }
+    .date-guide::after {
+      content: "將日期放在框內";
+      position: absolute;
+      left: 50%;
+      bottom: -34px;
+      transform: translateX(-50%);
+      width: max-content;
+      padding: 5px 9px;
+      border-radius: 8px;
+      color: white;
+      background: rgba(16,35,61,.78);
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
+    .field-label { display: block; color: #52657b; font-size: 13px; font-weight: 800; }
+    .field-label select, .field-label input {
+      width: 100%;
+      margin-top: 7px;
+      padding: 13px;
+      border: 1px solid #cdd9e8;
+      border-radius: 12px;
+      color: #172d4c;
+      background: white;
+      font: inherit;
+    }
+    .date-candidate { margin-top: 12px; padding: 14px; border: 1px solid #dce5f2; border-radius: 14px; }
+    .date-candidate strong { display: block; font-size: 21px; }
+    .date-candidate small { color: #68798d; }
+    .date-candidate button { width: 100%; margin-top: 11px; padding: 11px; }
+    .confirmed-date { margin-top: 14px; padding: 16px; border-radius: 14px; background: #e8f6e7; color: #236039; }
+    .confirmed-date strong, .confirmed-date span { display: block; }
+    .confirmed-date span { margin-top: 5px; font-size: 24px; font-weight: 900; }
+    .ocr-debug { margin-top: 12px; padding: 12px; border-radius: 12px; background: #f3f6fb; color: #52657b; }
+    .ocr-debug summary { cursor: pointer; font-weight: 800; }
+    .ocr-debug pre { margin: 10px 0 0; white-space: pre-wrap; word-break: break-word; font-size: 13px; }
+    .storage-result { margin-top: 14px; padding: 15px; border-radius: 14px; background: #edf3ff; color: #315379; line-height: 1.6; }
+    .warning { margin: 22px 0 0; color: #7a6851; font-size: 13px; }
+    footer { padding: 23px 8px 0; text-align: center; color: #718094; font-size: 12px; }
+    [hidden] { display: none !important; }
+    @media (max-width: 560px) {
+      .page { padding-top: 26px; }
+      .card { padding: 14px; border-radius: 19px; }
+      .camera { min-height: 250px; }
+      #preview { height: 295px; }
+      .actions { grid-template-columns: 1fr; }
+      .actions.three { grid-template-columns: 1fr; }
+      .form-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header>
+      <span class="tag">智能食物盒AI</span>
+      <h1>食物辨認與日期掃描</h1>
+      <p>食物辨認和包裝日期掃描使用兩個獨立拍照功能，照片不會互相取代。</p>
+    </header>
+
+    <section class="card">
+      <div class="feature-head">
+        <p class="caption">功能一</p>
+        <h2>辨認食物</h2>
+        <p>拍攝食物本身，CLIP會從內置清單找出三個中文候選結果。</p>
+      </div>
+      <label class="camera" for="photo">
+        <div id="empty-preview">
+          <span class="camera-icon">📷</span>
+          <strong>拍攝或選擇照片</strong>
+          <small>每次最好只放一種主要食物</small>
+        </div>
+        <img id="preview" alt="食物照片預覽" hidden>
+      </label>
+      <input id="photo" class="native-file-input" type="file" accept="image/*" capture="environment">
+      <p class="safari-help">iPhone Safari：按上面的相機框或這個原生按鈕，選擇「拍照」；請使用HTTPS網站並直接在Safari開啟。</p>
+    </section>
+
+    <section class="card">
+      <div class="built-in-list">
+        <strong>已內置你的最終食物清單</strong>
+        <p>包括最新版Word內全部156項資料。若拍攝包裝食品、即食食品或已煮熟食品，可選擇「已加工食品」，避免與生肉混淆。</p>
+      </div>
+
+      <div class="form-grid">
+        <label class="field-label">
+          辨認範圍
+          <select id="food-scope">
+            <option value="all">自動：比較全部食品</option>
+            <option value="ready">即食及冷凍食品：辨認即食雞胸時推薦</option>
+            <option value="processed">已加工食品：包裝、即食或已煮熟</option>
+            <option value="unprocessed">未加工食品：新鮮、生肉或生海鮮</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="actions single">
+        <button id="classify-button" type="button" disabled>開始辨認</button>
+      </div>
+
+      <div id="status" class="status loading">正在自動載入CLIP模型，期間可以先選擇食物照片。</div>
+      <progress id="progress" max="100" value="0" hidden></progress>
+    </section>
+
+    <section id="results" class="card" hidden>
+      <p class="caption">請確認辨認結果</p>
+      <h2 id="main-result"></h2>
+      <p id="category-path" class="category-path"></p>
+      <div id="prediction-list"></div>
+      <p class="warning">分數只表示候選類別之間的相對相似度，不代表食物安全或新鮮程度。</p>
+    </section>
+
+    <section class="card" id="date-scanner">
+      <div class="feature-head">
+        <p class="caption">功能二</p>
+        <h2>掃描包裝日期</h2>
+        <p>請另外拍攝食品包裝上的日期。系統會以灰階及高對比黑白模式多次掃描，失敗時自動使用PP-OCRv5 Mobile後備模型。</p>
+      </div>
+
+      <label class="camera date-camera" for="date-photo">
+        <div id="empty-date-preview">
+          <span class="camera-icon">🗓️</span>
+          <strong>拍攝或選擇日期照片</strong>
+          <small>只拍日期位置，避免同時拍攝整個包裝</small>
+        </div>
+        <img id="date-preview" alt="包裝日期相片預覽" hidden>
+        <div id="date-guide" class="date-guide" hidden></div>
+      </label>
+      <input id="date-photo" class="native-file-input" type="file" accept="image/*" capture="environment">
+      <p class="safari-help">如果相機框沒有反應，直接按這個原生按鈕並選擇「拍照」。</p>
+
+      <div class="form-grid">
+        <label class="field-label">
+          日期種類
+          <select id="date-type">
+            <option value="最佳食用日期">最佳食用日期</option>
+            <option value="到期日期">到期日期</option>
+            <option value="製造日期">製造日期</option>
+            <option value="其他日期">其他日期</option>
+          </select>
+        </label>
+        <label class="field-label">
+          手動輸入（掃描失敗時使用）
+          <input id="manual-date" type="date">
+        </label>
+      </div>
+
+      <div class="actions three">
+        <button id="scan-date-button" type="button" disabled>掃描日期</button>
+        <label id="retake-date-button" class="button secondary" for="date-photo">重新拍攝日期</label>
+        <button id="confirm-manual-date" class="secondary" type="button">確認手動日期</button>
+      </div>
+      <div id="ocr-status" class="status info">請使用第二個相機拍攝包裝日期。</div>
+      <progress id="ocr-progress" max="100" value="0" hidden></progress>
+      <details id="ocr-debug" class="ocr-debug" hidden>
+        <summary>查看OCR實際讀到的內容</summary>
+        <pre id="ocr-raw-text">尚未掃描</pre>
+      </details>
+
+      <div id="date-results" hidden>
+        <p class="caption" style="margin-top:18px">OCR找到的日期</p>
+        <div id="date-candidate-list"></div>
+      </div>
+
+      <div id="confirmed-date" class="confirmed-date" hidden>
+        <strong id="confirmed-date-type">已確認日期</strong>
+        <span id="confirmed-date-value"></span>
+        <small id="date-warning"></small>
+      </div>
+
+      <p class="warning">Tesseract及PP-OCRv5都可能把製造日期當成到期日期。請先選擇日期種類，再按確認。</p>
+    </section>
+
+    <section class="card" id="overnight-storage">
+      <div class="feature-head">
+        <p class="caption">功能三</p>
+        <h2>隔夜餸存放時間</h2>
+        <p>隔夜餸通常沒有印刷日期，因此使用放入雪櫃的時間計算，而不是由相片猜測。</p>
+      </div>
+      <div class="form-grid">
+        <label class="field-label">
+          放入雪櫃的日期和時間
+          <input id="stored-time" type="datetime-local">
+        </label>
+        <div class="actions" style="margin-top:20px">
+          <button id="use-current-time" class="secondary" type="button">使用現在時間</button>
+          <button id="save-storage-time" type="button">儲存時間</button>
+        </div>
+      </div>
+      <div id="storage-result" class="storage-result">尚未記錄存放時間。</div>
+    </section>
+
+    <footer>CLIP食物辨認 · PP-OCRv5日期辨認 · v10</footer>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <script type="module">
+    import {
+      env,
+      pipeline
+    } from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1";
+
+    const MODEL_ID = "Xenova/clip-vit-base-patch32";
+    const PADDLE_OCR_MODULE_URL = "https://cdn.jsdelivr.net/npm/@paddleocr/paddleocr-js@0.4.2/+esm";
+
+    function makeGroup(prompt, zh, rows) {
+      return {
+        prompt,
+        zh,
+        items: rows.trim().split("\n").map((row) => {
+          const [en, chinese] = row.split("|");
+          return { en: en.trim(), zh: chinese.trim() };
+        })
+      };
+    }
+
+    // English prompts are used internally by CLIP. Only Chinese names are
+    // rendered on the phone screen.
+    const UNPROCESSED_GROUPS = [
+      makeGroup("fresh fruit", "水果", `
+fresh apple|蘋果
+fresh banana|香蕉
+fresh orange|橙
+fresh pear|梨
+fresh grapes|提子
+fresh strawberry|士多啤梨
+fresh blueberry|藍莓
+fresh raspberry|紅莓
+fresh watermelon|西瓜
+fresh melon|蜜瓜
+fresh pineapple|菠蘿
+fresh mango|芒果
+fresh lemon|檸檬
+fresh lime|青檸
+fresh peach|桃
+fresh plum|李子
+fresh cherry|車厘子
+fresh kiwi fruit|奇異果
+fresh papaya|木瓜
+fresh avocado|牛油果
+fresh coconut|椰子
+fresh dragon fruit|火龍果`),
+
+      makeGroup("fresh vegetables", "蔬菜", `
+fresh carrot|甘筍
+fresh tomato|番茄
+fresh potato|薯仔
+fresh sweet potato|番薯
+fresh cucumber|青瓜
+fresh broccoli|西蘭花
+fresh cauliflower|椰菜花
+fresh cabbage|椰菜
+fresh Chinese cabbage|黃芽白
+fresh onion|洋蔥
+fresh red onion|紅洋蔥
+fresh garlic|蒜頭
+fresh ginger|薑
+fresh bell pepper|甜椒
+fresh chili pepper|辣椒
+fresh lettuce|生菜
+fresh spinach|菠菜
+fresh water spinach|通菜
+fresh bok choy|白菜
+fresh kale|羽衣甘藍
+fresh celery|西芹
+fresh asparagus|蘆筍
+fresh eggplant|茄子
+fresh zucchini|翠玉瓜
+fresh pumpkin|南瓜
+fresh corn|粟米
+fresh mushroom|蘑菇
+fresh green beans|四季豆
+fresh peas|青豆
+fresh lotus root|蓮藕
+fresh radish|白蘿蔔
+fresh beetroot|紅菜頭`),
+
+      makeGroup("raw meat", "生肉類", `
+raw chicken breast|生雞胸肉
+raw chicken thigh|生雞髀肉
+raw chicken wing|生雞翼
+whole raw chicken|原隻生雞
+raw pork|生豬肉
+raw pork chop|生豬扒
+raw pork belly|生豬腩肉
+raw pork ribs|生豬肋骨
+raw beef|生牛肉
+raw beef steak|生牛扒
+raw ground beef|生免治牛肉
+raw lamb|生羊肉
+raw lamb chop|生羊扒
+raw duck meat|生鴨肉
+whole raw duck|原隻生鴨`),
+
+      makeGroup("raw seafood", "生海鮮", `
+whole raw fish|原條生魚
+raw fish fillet|生魚柳
+raw salmon|生三文魚
+raw tuna|生吞拿魚
+raw shrimp|生蝦
+raw crab|生蟹
+raw lobster|生龍蝦
+raw squid|生魷魚
+raw octopus|生八爪魚
+raw scallops|生帶子
+raw mussels|生青口
+raw clams|生蜆
+raw oysters|生蠔`),
+
+      makeGroup("fresh eggs and dairy food", "蛋類及奶類", `
+raw chicken egg|生雞蛋
+raw duck egg|生鴨蛋
+fresh milk|鮮奶
+plain yogurt|原味乳酪
+fresh cheese|芝士`),
+
+      makeGroup("fresh beans and tofu", "豆類及豆製品", `
+fresh green peas|新鮮青豆
+fresh edamame|毛豆
+raw tofu|豆腐`)
+    ];
+
+    const PROCESSED_GROUPS = [
+      makeGroup("processed fruit products", "水果製品", `
+canned pineapple|菠蘿罐頭
+canned peach slices|桃片罐頭
+canned fruit cocktail|雜果罐頭
+fruit jam|果醬`),
+
+      makeGroup("processed canned or pickled vegetables", "蔬菜及醃製食品", `
+canned sweet corn|粟米罐頭
+canned green peas|青豆罐頭
+canned tomatoes|番茄罐頭
+canned mushrooms|蘑菇罐頭
+pickled cucumber|醃青瓜
+pickled radish|醃蘿蔔
+kimchi|泡菜
+sauerkraut|酸椰菜
+frozen mixed vegetables|急凍雜菜
+tomato paste|番茄膏`),
+
+      makeGroup("processed meat products", "肉類製品", `
+sausage|香腸
+hot dog sausage|熱狗腸
+bacon|煙肉
+ham|火腿
+luncheon meat|午餐肉
+salami|沙樂美腸
+chicken nuggets|雞塊
+meatballs|肉丸
+beef burger patty|牛肉漢堡扒
+canned meat|肉類罐頭
+breaded chicken cutlet|裹粉雞扒
+Chinese cured sausage|臘腸`),
+
+      makeGroup("processed seafood products", "海鮮製品", `
+canned tuna|吞拿魚罐頭
+canned sardines|沙甸魚罐頭
+smoked salmon|煙三文魚
+fish balls|魚蛋
+fish cake|魚餅
+crab sticks|蟹柳
+breaded fish fillet|裹粉魚柳
+dried squid|魷魚乾
+shrimp paste|蝦醬`),
+
+      makeGroup("processed dairy and soy products", "奶類及豆製品", `
+pasteurized milk|巴士德消毒鮮奶
+flavored milk|調味奶
+plain yogurt|原味乳酪
+fruit yogurt|水果乳酪
+cheese|芝士
+processed cheese slices|加工芝士片
+butter|牛油
+ice cream|雪糕
+soy milk|豆漿
+tofu|豆腐`),
+
+      makeGroup("grain bread and breakfast food", "穀物、麵包及早餐食品", `
+cake|蛋糕`),
+
+      makeGroup("snacks and desserts", "零食及甜品", `
+jelly dessert|啫喱
+packaged pudding|杯裝布甸
+ice pop|冰條`),
+
+      makeGroup("ready-to-eat and frozen food", "即食及冷凍食品", `
+frozen pizza|急凍薄餅
+frozen dumplings|急凍餃子
+frozen French fries|急凍薯條
+frozen fish fingers|急凍魚手指
+frozen fried rice|急凍炒飯
+microwave ready meal|微波即食餐
+ready-made sandwich|即食三文治
+packaged ready-to-eat chicken breast|即食雞胸`),
+
+      makeGroup("sauces and drinks", "醬料及飲品", `
+ketchup|茄汁
+mayonnaise|蛋黃醬
+soy sauce|豉油
+oyster sauce|蠔油
+chili sauce|辣椒醬
+salad dressing|沙律醬
+peanut butter|花生醬
+curry sauce|咖喱醬`)
+    ];
+
+    const CLIP_PROMPT_OVERRIDES = new Map([
+      ["raw chicken breast", "uncooked raw pink chicken breast meat on a preparation tray"],
+      ["packaged ready-to-eat chicken breast", "cooked ready-to-eat chicken breast inside sealed retail food packaging"]
+    ]);
+
+    function makeFoodCandidates(groups, category) {
+      return groups.flatMap((group) =>
+        group.items.map((item) => ({
+          ...item,
+          clipLabel: CLIP_PROMPT_OVERRIDES.get(item.en) || `${item.en}, ${group.prompt}`,
+          path: `${category} › ${group.zh}`
+        }))
+      );
+    }
+
+    const UNPROCESSED_FOODS = makeFoodCandidates(UNPROCESSED_GROUPS, "未加工食品");
+    const PROCESSED_FOODS = makeFoodCandidates(PROCESSED_GROUPS, "已加工食品");
+    const READY_TO_EAT_FOODS = PROCESSED_FOODS.filter(
+      (food) => food.path === "已加工食品 › 即食及冷凍食品"
+    );
+    const ALL_FOODS = [...UNPROCESSED_FOODS, ...PROCESSED_FOODS];
+
+    // Browser cache stores model files after the first download.
+    env.allowLocalModels = false;
+    env.useBrowserCache = true;
+
+    const fileInput = document.querySelector("#photo");
+    const preview = document.querySelector("#preview");
+    const emptyPreview = document.querySelector("#empty-preview");
+    const classifyButton = document.querySelector("#classify-button");
+    const statusBox = document.querySelector("#status");
+    const progressBar = document.querySelector("#progress");
+    const resultsBox = document.querySelector("#results");
+    const mainResult = document.querySelector("#main-result");
+    const categoryPath = document.querySelector("#category-path");
+    const predictionList = document.querySelector("#prediction-list");
+    const foodScope = document.querySelector("#food-scope");
+    const datePhotoInput = document.querySelector("#date-photo");
+    const datePreview = document.querySelector("#date-preview");
+    const emptyDatePreview = document.querySelector("#empty-date-preview");
+    const dateGuide = document.querySelector("#date-guide");
+    const dateType = document.querySelector("#date-type");
+    const manualDate = document.querySelector("#manual-date");
+    const scanDateButton = document.querySelector("#scan-date-button");
+    const confirmManualDateButton = document.querySelector("#confirm-manual-date");
+    const ocrStatus = document.querySelector("#ocr-status");
+    const ocrProgress = document.querySelector("#ocr-progress");
+    const ocrDebug = document.querySelector("#ocr-debug");
+    const ocrRawText = document.querySelector("#ocr-raw-text");
+    const dateResults = document.querySelector("#date-results");
+    const dateCandidateList = document.querySelector("#date-candidate-list");
+    const confirmedDateBox = document.querySelector("#confirmed-date");
+    const confirmedDateType = document.querySelector("#confirmed-date-type");
+    const confirmedDateValue = document.querySelector("#confirmed-date-value");
+    const dateWarning = document.querySelector("#date-warning");
+    const storedTime = document.querySelector("#stored-time");
+    const useCurrentTimeButton = document.querySelector("#use-current-time");
+    const saveStorageTimeButton = document.querySelector("#save-storage-time");
+    const storageResult = document.querySelector("#storage-result");
+
+    let classifier = null;
+    let modelLoading = false;
+    let imageUrl = null;
+    let imageReady = false;
+    let dateImageUrl = null;
+    let dateImageFile = null;
+
+    fileInput.addEventListener("change", () => {
+      const file = fileInput.files[0];
+      if (!file) return;
+
+      if (imageUrl) URL.revokeObjectURL(imageUrl);
+      imageUrl = URL.createObjectURL(file);
+      imageReady = false;
+      resultsBox.hidden = true;
+      preview.src = imageUrl;
+
+      preview.onload = () => {
+        imageReady = true;
+        preview.hidden = false;
+        emptyPreview.hidden = true;
+        updateButtons();
+        setStatus(
+          classifier ? "照片已準備好，可以開始辨認。" : "照片已準備好，CLIP模型正在自動載入……",
+          classifier ? "info" : "loading"
+        );
+      };
+    });
+
+    classifyButton.addEventListener("click", classifyImage);
+
+    datePhotoInput.addEventListener("change", () => {
+      const file = datePhotoInput.files[0];
+      if (!file) return;
+
+      if (dateImageUrl) URL.revokeObjectURL(dateImageUrl);
+      dateImageFile = file;
+      dateImageUrl = URL.createObjectURL(file);
+      dateResults.hidden = true;
+      confirmedDateBox.hidden = true;
+      ocrDebug.hidden = true;
+      ocrRawText.textContent = "尚未掃描";
+      datePreview.src = dateImageUrl;
+
+      datePreview.onload = () => {
+        datePreview.hidden = false;
+        emptyDatePreview.hidden = true;
+        dateGuide.hidden = false;
+        scanDateButton.disabled = false;
+        setOcrStatus("日期照片已準備好，可以開始掃描。", "info");
+      };
+    });
+
+    scanDateButton.addEventListener("click", scanPackageDate);
+    confirmManualDateButton.addEventListener("click", () => {
+      if (!manualDate.value) {
+        setOcrStatus("請先選擇一個手動日期。", "error");
+        return;
+      }
+      confirmDate(manualDate.value, "手動輸入");
+    });
+    useCurrentTimeButton.addEventListener("click", () => {
+      storedTime.value = toLocalDateTimeInput(new Date());
+    });
+    saveStorageTimeButton.addEventListener("click", saveStorageTime);
+    restoreSavedRecords();
+    loadModel();
+
+    async function loadModel() {
+      if (classifier || modelLoading) return;
+
+      modelLoading = true;
+      progressBar.hidden = false;
+      setStatus("正在自動下載及載入CLIP模型。第一次可能需要數分鐘……", "loading");
+
+      try {
+        classifier = await pipeline(
+          "zero-shot-image-classification",
+          MODEL_ID,
+          {
+            dtype: "q8",
+            device: "wasm",
+            progress_callback: updateProgress
+          }
+        );
+
+        progressBar.value = 100;
+        setStatus(
+          imageReady ? "模型及照片已準備好，可以開始辨認。" : "CLIP模型已自動載入，請拍攝食物照片。",
+          "success"
+        );
+      } catch (error) {
+        console.error(error);
+        classifier = null;
+        setStatus("CLIP模型自動載入失敗，請檢查網絡後重新整理頁面。", "error");
+      } finally {
+        modelLoading = false;
+      }
+
+      updateButtons();
+    }
+
+    function updateProgress(data) {
+      if (typeof data.progress === "number") {
+        progressBar.value = Math.max(progressBar.value, data.progress);
+        setStatus(`正在載入CLIP模型：${Math.round(data.progress)}%`, "loading");
+      } else if (data.status === "ready") {
+        progressBar.value = 100;
+      }
+    }
+
+    async function classifyImage() {
+      if (!classifier) {
+        setStatus("CLIP模型仍在自動載入，請稍候。", "loading");
+        return;
+      }
+      if (!imageReady || !imageUrl) {
+        setStatus("請先拍攝或選擇照片。", "error");
+        return;
+      }
+      classifyButton.disabled = true;
+      classifyButton.textContent = "辨認中……";
+      resultsBox.hidden = true;
+      const selectedFoods = foodScope.value === "ready"
+        ? READY_TO_EAT_FOODS
+        : foodScope.value === "processed"
+          ? PROCESSED_FOODS
+          : foodScope.value === "unprocessed"
+            ? UNPROCESSED_FOODS
+            : ALL_FOODS;
+      const scopeName = foodScope.value === "ready"
+        ? "即食及冷凍食品"
+        : foodScope.value === "processed"
+          ? "已加工食品"
+          : foodScope.value === "unprocessed"
+            ? "未加工食品"
+            : "全部食品";
+      setStatus(`正在${scopeName}中比較${selectedFoods.length}個候選項目，請稍候……`, "loading");
+
+      try {
+        const output = await runClip(selectedFoods.map((food) => food.clipLabel));
+        const foodMap = new Map(
+          selectedFoods.map((food) => [normalise(food.clipLabel), food])
+        );
+        const chinesePredictions = output.slice(0, 3).map((prediction) => {
+          const food = foodMap.get(normalise(prediction.label));
+          if (!food) throw new Error("無法配對食品名稱");
+          return { zh: food.zh, path: food.path, score: prediction.score };
+        });
+
+        showResults(chinesePredictions);
+        setStatus("辨認完成。請按下其中一個確認按鈕。", "info");
+      } catch (error) {
+        console.error(error);
+        setStatus(`辨認失敗：${error.message}`, "error");
+      } finally {
+        updateButtons();
+      }
+    }
+
+    async function runClip(labels) {
+      return classifier(imageUrl, labels, {
+        hypothesis_template: "a close-up photo of {}"
+      });
+    }
+
+    function normalise(value) {
+      return String(value).trim().toLowerCase();
+    }
+
+    function showResults(predictions) {
+      if (!predictions.length) throw new Error("模型沒有傳回結果");
+
+      mainResult.textContent = "請選擇正確食物";
+      categoryPath.textContent = "AI建議以下三項，請按下最接近照片的選項。";
+      predictionList.innerHTML = "";
+
+      predictions.forEach((prediction, index) => {
+        const percentage = Number(prediction.score) * 100;
+        const item = document.createElement("div");
+        item.className = "prediction";
+
+        const row = document.createElement("div");
+        row.className = "prediction-row";
+        const label = document.createElement("span");
+        label.textContent = `${index + 1}. ${prediction.zh}`;
+        const score = document.createElement("strong");
+        score.textContent = `${percentage.toFixed(1)}%`;
+
+        const meter = document.createElement("div");
+        meter.className = "meter";
+        const fill = document.createElement("span");
+        fill.style.width = `${Math.min(100, Math.max(0, percentage))}%`;
+
+        const path = document.createElement("p");
+        path.className = "prediction-path";
+        path.textContent = prediction.path;
+
+        const confirmButton = document.createElement("button");
+        confirmButton.type = "button";
+        confirmButton.className = "confirm-choice";
+        confirmButton.textContent = `確認是「${prediction.zh}」`;
+        confirmButton.addEventListener("click", () => {
+          confirmPrediction(prediction, item, confirmButton);
+        });
+
+        row.append(label, score);
+        meter.append(fill);
+        item.append(row, meter, path, confirmButton);
+        predictionList.append(item);
+      });
+
+      resultsBox.hidden = false;
+      resultsBox.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+
+    function confirmPrediction(prediction, selectedItem, selectedButton) {
+      predictionList.querySelectorAll(".prediction").forEach((item) => {
+        item.classList.remove("confirmed");
+      });
+      predictionList.querySelectorAll(".confirm-choice").forEach((button) => {
+        button.classList.remove("selected");
+        button.textContent = button.dataset.originalText || button.textContent;
+        button.disabled = false;
+      });
+
+      predictionList.querySelectorAll(".confirm-choice").forEach((button) => {
+        if (!button.dataset.originalText) button.dataset.originalText = button.textContent;
+      });
+
+      selectedItem.classList.add("confirmed");
+      selectedButton.classList.add("selected");
+      selectedButton.textContent = "✓ 已確認這項食品";
+      selectedButton.disabled = true;
+      mainResult.textContent = prediction.zh;
+      categoryPath.textContent = prediction.path;
+
+      try {
+        localStorage.setItem("confirmedFood", JSON.stringify({
+          name: prediction.zh,
+          category: prediction.path,
+          confirmedAt: new Date().toISOString()
+        }));
+      } catch (error) {
+        // Private browsing may block storage; confirmation should still work.
+        console.warn("無法儲存確認結果", error);
+      }
+
+      setStatus(`已確認食品：${prediction.zh}`, "success");
+    }
+
+    async function scanPackageDate() {
+      if (!dateImageFile) {
+        setOcrStatus("請先使用第二個相機拍攝包裝日期。", "error");
+        return;
+      }
+      if (!window.Tesseract) {
+        setOcrStatus("OCR程式未能載入，請檢查網絡後重新整理頁面。", "error");
+        return;
+      }
+
+      scanDateButton.disabled = true;
+      scanDateButton.textContent = "掃描中……";
+      ocrProgress.hidden = false;
+      ocrProgress.value = 0;
+      dateResults.hidden = true;
+      confirmedDateBox.hidden = true;
+      ocrDebug.hidden = true;
+      ocrRawText.textContent = "";
+      setOcrStatus("正在啟動專用日期OCR，第一次使用可能需要較長時間……", "loading");
+
+      let worker = null;
+      let currentAttempt = 0;
+      const rawResults = [];
+
+      try {
+        const variants = createDateImageVariants(datePreview);
+        worker = await window.Tesseract.createWorker("eng", 1, {
+          logger(message) {
+            if (message.status === "recognizing text") {
+              const percentage = Math.round(
+                ((currentAttempt + (message.progress || 0)) / variants.length) * 100
+              );
+              ocrProgress.value = percentage;
+              setOcrStatus(`正在進行第${currentAttempt + 1}次日期掃描：${percentage}%`, "loading");
+            } else if (message.status === "loading language traineddata") {
+              setOcrStatus("正在下載英文OCR資料……", "loading");
+            } else if (message.status === "initializing api") {
+              setOcrStatus("正在啟動OCR……", "loading");
+            }
+          }
+        });
+
+        await worker.setParameters({
+          tessedit_char_whitelist: "0123456789-/. ",
+          tessedit_pageseg_mode: window.Tesseract.PSM.SPARSE_TEXT,
+          preserve_interword_spaces: "1",
+          user_defined_dpi: "300"
+        });
+
+        let candidates = [];
+        for (currentAttempt = 0; currentAttempt < variants.length; currentAttempt += 1) {
+          const variant = variants[currentAttempt];
+          await worker.setParameters({
+            tessedit_pageseg_mode: variant.pageMode
+          });
+          const result = await worker.recognize(variant.canvas);
+          const rawText = String(result.data.text || "").trim();
+          rawResults.push(`掃描${currentAttempt + 1}（${variant.name}）：${rawText || "沒有讀到文字"}`);
+          candidates = findDatesInText(rawText);
+          if (candidates.length) break;
+        }
+
+        if (!candidates.length) {
+          if (worker) {
+            await worker.terminate();
+            worker = null;
+          }
+          candidates = await recognizeDateWithPaddleOCR(
+            dateImageFile,
+            variants[variants.length - 1].canvas,
+            rawResults
+          );
+        }
+
+        ocrProgress.value = 100;
+        ocrRawText.textContent = rawResults.join("\n");
+        ocrDebug.hidden = false;
+
+        if (!candidates.length) {
+          dateCandidateList.innerHTML = "";
+          dateResults.hidden = true;
+          setOcrStatus("Tesseract及PP-OCRv5都未找到日期。請查看OCR內容，或使用手動日期。", "error");
+          return;
+        }
+
+        renderDateCandidates(candidates);
+        setOcrStatus(`掃描完成，共找到${candidates.length}個可能日期，請確認。`, "success");
+      } catch (error) {
+        console.error("日期OCR失敗", error);
+        setOcrStatus("日期辨認失敗。請重新拍攝，或使用手動日期。", "error");
+      } finally {
+        if (worker) {
+          try {
+            await worker.terminate();
+          } catch (error) {
+            console.warn("OCR工作程序未能正常關閉", error);
+          }
+        }
+        scanDateButton.disabled = false;
+        scanDateButton.textContent = "掃描日期";
+      }
+    }
+
+    async function recognizeDateWithPaddleOCR(originalImage, enhancedCanvas, rawResults) {
+      let paddleOcr = null;
+      setOcrStatus("Tesseract未找到日期，正在載入PP-OCRv5 Mobile……", "loading");
+      ocrProgress.value = 45;
+
+      try {
+        const { PaddleOCR } = await import(PADDLE_OCR_MODULE_URL);
+        ocrProgress.value = 55;
+        setOcrStatus("正在下載PP-OCRv5文字偵測及辨認模型……", "loading");
+
+        paddleOcr = await PaddleOCR.create({
+          textDetectionModelName: "PP-OCRv5_mobile_det",
+          textRecognitionModelName: "PP-OCRv5_mobile_rec",
+          worker: false,
+          ortOptions: {
+            backend: "wasm",
+            wasmPaths: "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.24.3/dist/",
+            numThreads: 1,
+            simd: true
+          }
+        });
+
+        const sources = [
+          { name: "原始日期照片", image: originalImage },
+          { name: "高對比黑白照片", image: enhancedCanvas }
+        ];
+
+        for (let index = 0; index < sources.length; index += 1) {
+          const source = sources[index];
+          ocrProgress.value = 70 + (index * 15);
+          setOcrStatus(`PP-OCRv5正在辨認${source.name}……`, "loading");
+
+          const [result] = await paddleOcr.predict(source.image, {
+            textDetLimitSideLen: 960,
+            textDetLimitType: "max",
+            textDetThresh: 0.25,
+            textDetBoxThresh: 0.35,
+            textRecScoreThresh: 0.20
+          });
+          const text = (result?.items || [])
+            .map((item) => String(item.text || "").trim())
+            .filter(Boolean)
+            .join("\n");
+
+          rawResults.push(`PP-OCRv5（${source.name}）：${text || "沒有讀到文字"}`);
+          const candidates = findDatesInText(text);
+          if (candidates.length) return candidates;
+        }
+
+        return [];
+      } catch (error) {
+        console.error("PP-OCRv5後備辨認失敗", error);
+        rawResults.push(`PP-OCRv5後備掃描：模型未能完成辨認`);
+        return [];
+      } finally {
+        if (paddleOcr && typeof paddleOcr.dispose === "function") {
+          try {
+            await paddleOcr.dispose();
+          } catch (error) {
+            console.warn("PP-OCRv5記憶體未能正常釋放", error);
+          }
+        }
+      }
+    }
+
+    function createDateImageVariants(image) {
+      return [
+        {
+          name: "中央日期框－灰階強化",
+          canvas: preprocessDateImage(image, { cropY: 0.18, cropHeight: 0.50, binary: false }),
+          pageMode: window.Tesseract.PSM.SPARSE_TEXT
+        },
+        {
+          name: "中央日期框－黑白強化",
+          canvas: preprocessDateImage(image, { cropY: 0.18, cropHeight: 0.50, binary: true }),
+          pageMode: window.Tesseract.PSM.SPARSE_TEXT
+        },
+        {
+          name: "完整照片",
+          canvas: preprocessDateImage(image, { cropY: 0, cropHeight: 1, binary: false }),
+          pageMode: window.Tesseract.PSM.SPARSE_TEXT
+        },
+        {
+          name: "完整照片－高對比黑白OCR",
+          canvas: preprocessDateImage(image, {
+            cropY: 0,
+            cropHeight: 1,
+            widthFraction: 1,
+            binary: true,
+            contrast: 1.8,
+            threshold: 140
+          }),
+          pageMode: window.Tesseract.PSM.SPARSE_TEXT
+        }
+      ];
+    }
+
+    function preprocessDateImage(image, options = {}) {
+      const sourceWidth = image.naturalWidth;
+      const sourceHeight = image.naturalHeight;
+      const cropWidth = sourceWidth * (options.widthFraction ?? 0.90);
+      const cropHeight = sourceHeight * (options.cropHeight ?? 0.50);
+      const cropX = (sourceWidth - cropWidth) / 2;
+      const cropY = sourceHeight * (options.cropY ?? 0.18);
+      const desiredLongSide = 2200;
+      const scale = Math.min(3, desiredLongSide / Math.max(cropWidth, cropHeight));
+      const safeScale = Math.max(0.25, scale);
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(cropWidth * safeScale);
+      canvas.height = Math.round(cropHeight * safeScale);
+
+      const context = canvas.getContext("2d", { willReadFrequently: true });
+      context.drawImage(
+        image,
+        cropX, cropY, cropWidth, cropHeight,
+        0, 0, canvas.width, canvas.height
+      );
+
+      const pixels = context.getImageData(0, 0, canvas.width, canvas.height);
+      for (let index = 0; index < pixels.data.length; index += 4) {
+        const red = pixels.data[index];
+        const green = pixels.data[index + 1];
+        const blue = pixels.data[index + 2];
+        const gray = (red * 0.299) + (green * 0.587) + (blue * 0.114);
+        const contrast = options.contrast ?? 1.65;
+        const threshold = options.threshold ?? 145;
+        const contrasted = Math.max(0, Math.min(255, ((gray - 128) * contrast) + 128));
+        const value = options.binary ? (contrasted > threshold ? 255 : 0) : contrasted;
+        pixels.data[index] = value;
+        pixels.data[index + 1] = value;
+        pixels.data[index + 2] = value;
+      }
+      context.putImageData(pixels, 0, 0);
+      return canvas;
+    }
+
+    function findDatesInText(text) {
+      const cleaned = String(text)
+        .toUpperCase()
+        .replace(/[，,]/g, " ")
+        .replace(/[–—_]/g, "-")
+        .replace(/\s+/g, " ")
+        .trim();
+      const numericText = cleaned
+        .replace(/[OQ]/g, "0")
+        .replace(/[IL|]/g, "1")
+        .replace(/Z/g, "2")
+        .replace(/S/g, "5")
+        .replace(/G/g, "6")
+        .replace(/T/g, "7")
+        .replace(/B/g, "8");
+      const compactNumericText = numericText.replace(/\s+/g, "");
+      const found = new Map();
+
+      function addDate(year, month, day) {
+        const y = Number(year);
+        const m = Number(month);
+        const d = Number(day);
+        if (!isRealDate(y, m, d)) return;
+        const iso = `${String(y).padStart(4, "0")}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+        if (!found.has(iso)) found.set(iso, { iso });
+      }
+
+      for (const match of numericText.matchAll(/\b(20\d{2})\s*[\/.\-]\s*(0?[1-9]|1[0-2])\s*[\/.\-]\s*(0?[1-9]|[12]\d|3[01])\b/g)) {
+        addDate(match[1], match[2], match[3]);
+      }
+      for (const match of numericText.matchAll(/\b(0?[1-9]|[12]\d|3[01])\s*[\/.\-]\s*(0?[1-9]|1[0-2])\s*[\/.\-]\s*(20\d{2})\b/g)) {
+        addDate(match[3], match[2], match[1]);
+      }
+      // PaddleOCR may preserve spaces in printed dates, for example
+      // "BEST BEFORE 31 07 26" or "2026 07 31".
+      for (const match of numericText.matchAll(/\b(20\d{2})\s+(0?[1-9]|1[0-2])\s+(0?[1-9]|[12]\d|3[01])\b/g)) {
+        addDate(match[1], match[2], match[3]);
+      }
+      for (const match of numericText.matchAll(/\b(0?[1-9]|[12]\d|3[01])\s+(0?[1-9]|1[0-2])\s+(20\d{2})\b/g)) {
+        addDate(match[3], match[2], match[1]);
+      }
+      for (const match of numericText.matchAll(/\b(0?[1-9]|[12]\d|3[01])\s+(0?[1-9]|1[0-2])\s+(\d{2})\b/g)) {
+        addDate(2000 + Number(match[3]), match[2], match[1]);
+      }
+      for (const match of compactNumericText.matchAll(/\b(20\d{2})(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\b/g)) {
+        addDate(match[1], match[2], match[3]);
+      }
+      // Food packages often print DD-MM-YY, for example 31-07-26.
+      for (const match of numericText.matchAll(/\b(0?[1-9]|[12]\d|3[01])\s*[\/.\-]\s*(0?[1-9]|1[0-2])\s*[\/.\-]\s*(\d{2})\b/g)) {
+        addDate(2000 + Number(match[3]), match[2], match[1]);
+      }
+      for (const match of compactNumericText.matchAll(/\b(0[1-9]|[12]\d|3[01])(0[1-9]|1[0-2])(\d{2})\b/g)) {
+        addDate(2000 + Number(match[3]), match[2], match[1]);
+      }
+
+      const months = {
+        JAN: 1, FEB: 2, MAR: 3, APR: 4, MAY: 5, JUN: 6,
+        JUL: 7, AUG: 8, SEP: 9, OCT: 10, NOV: 11, DEC: 12
+      };
+      for (const match of cleaned.matchAll(/\b(0?[1-9]|[12]\d|3[01])\s+([A-Z]{3,9})\s+(20\d{2})\b/g)) {
+        const month = months[match[2].slice(0, 3)];
+        if (month) addDate(match[3], month, match[1]);
+      }
+      for (const match of cleaned.matchAll(/\b([A-Z]{3,9})\s+(0?[1-9]|[12]\d|3[01])\s+(20\d{2})\b/g)) {
+        const month = months[match[1].slice(0, 3)];
+        if (month) addDate(match[3], month, match[2]);
+      }
+
+      return [...found.values()].sort((a, b) => a.iso.localeCompare(b.iso));
+    }
+
+    function isRealDate(year, month, day) {
+      if (year < 2000 || year > 2099) return false;
+      const value = new Date(Date.UTC(year, month - 1, day));
+      return value.getUTCFullYear() === year
+        && value.getUTCMonth() === month - 1
+        && value.getUTCDate() === day;
+    }
+
+    function renderDateCandidates(candidates) {
+      dateCandidateList.innerHTML = "";
+      candidates.forEach((candidate, index) => {
+        const item = document.createElement("div");
+        item.className = "date-candidate";
+
+        const label = document.createElement("strong");
+        label.textContent = formatChineseDate(candidate.iso);
+        const note = document.createElement("small");
+        note.textContent = `可能日期 ${index + 1}`;
+        const button = document.createElement("button");
+        button.type = "button";
+        button.textContent = "確認使用這個日期";
+        button.addEventListener("click", () => confirmDate(candidate.iso, "OCR掃描"));
+
+        item.append(label, note, button);
+        dateCandidateList.append(item);
+      });
+      dateResults.hidden = false;
+      dateResults.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+
+    function confirmDate(isoDate, source) {
+      if (!isIsoDate(isoDate)) {
+        setOcrStatus("日期格式不正確，請重新選擇。", "error");
+        return;
+      }
+
+      const type = dateType.value;
+      confirmedDateType.textContent = `已確認：${type}`;
+      confirmedDateValue.textContent = formatChineseDate(isoDate);
+      dateWarning.textContent = buildDateWarning(isoDate, type);
+      confirmedDateBox.hidden = false;
+      setOcrStatus(`${source}日期已確認。`, "success");
+
+      try {
+        localStorage.setItem("confirmedPackageDate", JSON.stringify({
+          type,
+          date: isoDate,
+          source,
+          confirmedAt: new Date().toISOString()
+        }));
+      } catch (error) {
+        console.warn("無法儲存日期", error);
+      }
+    }
+
+    function buildDateWarning(isoDate, type) {
+      if (type === "製造日期" || type === "其他日期") {
+        return "此日期只作記錄，系統不會用它判斷食物是否過期。";
+      }
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const target = new Date(`${isoDate}T00:00:00`);
+      const days = Math.round((target - today) / 86400000);
+      if (days < 0) return `⚠️ 已超過日期${Math.abs(days)}日。`;
+      if (days === 0) return "⚠️ 日期是今天。";
+      if (days <= 3) return `⚠️ 尚餘${days}日，請盡快處理。`;
+      return `尚餘${days}日。`;
+    }
+
+    function isIsoDate(value) {
+      const match = String(value).match(/^(20\d{2})-(\d{2})-(\d{2})$/);
+      return Boolean(match && isRealDate(Number(match[1]), Number(match[2]), Number(match[3])));
+    }
+
+    function formatChineseDate(isoDate) {
+      const [year, month, day] = isoDate.split("-");
+      return `${year}年${Number(month)}月${Number(day)}日`;
+    }
+
+    function toLocalDateTimeInput(date) {
+      const offset = date.getTimezoneOffset() * 60000;
+      return new Date(date.getTime() - offset).toISOString().slice(0, 16);
+    }
+
+    function saveStorageTime() {
+      if (!storedTime.value) {
+        storageResult.textContent = "請先選擇放入雪櫃的日期和時間。";
+        return;
+      }
+
+      const start = new Date(storedTime.value);
+      const now = new Date();
+      if (Number.isNaN(start.getTime()) || start > now) {
+        storageResult.textContent = "存放時間不正確，不能遲於現在。";
+        return;
+      }
+
+      renderStorageResult(start, now);
+      try {
+        localStorage.setItem("overnightStorage", JSON.stringify({
+          storedAt: start.toISOString(),
+          savedAt: now.toISOString()
+        }));
+      } catch (error) {
+        console.warn("無法儲存隔夜餸時間", error);
+      }
+    }
+
+    function renderStorageResult(start, now = new Date()) {
+      const elapsedHours = Math.floor((now - start) / 3600000);
+      const elapsedDays = Math.floor(elapsedHours / 24);
+      const remainingHours = elapsedHours % 24;
+      const crossedToAnotherDay = start.toDateString() !== now.toDateString();
+      const overnightMessage = crossedToAnotherDay
+        ? "已跨過日期，可標示為隔夜餸。"
+        : "仍是同一天，暫未標示為隔夜餸。";
+
+      storageResult.textContent = `已存放${elapsedDays}日${remainingHours}小時。${overnightMessage}`;
+    }
+
+    function restoreSavedRecords() {
+      try {
+        const savedDate = JSON.parse(localStorage.getItem("confirmedPackageDate") || "null");
+        if (savedDate && isIsoDate(savedDate.date)) {
+          dateType.value = savedDate.type || "其他日期";
+          confirmedDateType.textContent = `已確認：${dateType.value}`;
+          confirmedDateValue.textContent = formatChineseDate(savedDate.date);
+          dateWarning.textContent = buildDateWarning(savedDate.date, dateType.value);
+          confirmedDateBox.hidden = false;
+        }
+
+        const savedStorage = JSON.parse(localStorage.getItem("overnightStorage") || "null");
+        if (savedStorage?.storedAt) {
+          const start = new Date(savedStorage.storedAt);
+          if (!Number.isNaN(start.getTime()) && start <= new Date()) {
+            storedTime.value = toLocalDateTimeInput(start);
+            renderStorageResult(start);
+          }
+        }
+      } catch (error) {
+        console.warn("無法讀取已儲存資料", error);
+      }
+    }
+
+    function setOcrStatus(message, type) {
+      ocrStatus.textContent = message;
+      ocrStatus.className = `status ${type}`;
+    }
+
+    function updateButtons() {
+      classifyButton.disabled = !(classifier && imageReady);
+      classifyButton.textContent = "開始辨認";
+    }
+
+    function setStatus(message, type) {
+      statusBox.textContent = message;
+      statusBox.className = `status ${type}`;
+    }
+  </script>
+</body>
+</html>
